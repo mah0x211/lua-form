@@ -5,6 +5,20 @@ local form = require('form')
 local FILE = io.tmpfile()
 FILE:close()
 
+function testcase.is_valid_boundary()
+    -- test that true
+    assert(form.is_valid_boundary('foo-bar-baz'))
+
+    -- test that return invalid character error
+    local ok, err = form.is_valid_boundary('foo#bar-baz')
+    assert.is_false(ok)
+    assert.match(err, 'invalid character "#" found in boundary')
+
+    -- test that throws an error if boundary is not string
+    err = assert.throws(form.is_valid_boundary, {})
+    assert.match(err, 'boundary must be string')
+end
+
 function testcase.new()
     -- test that create new form
     local f = form.new()

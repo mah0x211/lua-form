@@ -222,5 +222,6 @@ end
 return {
     new = Form,
     decode = decode,
+    is_valid_boundary = multipart.is_valid_boundary,
 }
 
