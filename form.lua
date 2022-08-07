@@ -182,14 +182,13 @@ end
 --- encode
 --- @param writer table|userdata
 --- @param boundary string|nil
---- @param chunksize integer|nil
 --- @return integer|nil nbyte
 --- @return any err
-function Form:encode(writer, boundary, chunksize)
+function Form:encode(writer, boundary)
     if boundary == nil then
         return encode_urlencoded(writer, self.data)
     end
-    return encode_multipart(writer, self.data, boundary, chunksize)
+    return encode_multipart(writer, self.data, boundary)
 end
 
 Form = require('metamodule').new(Form)
