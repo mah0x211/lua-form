@@ -282,6 +282,19 @@ function testcase.encode_multipart()
             str = str .. s
             return #s
         end,
+        writefile = function(self, file, len, offset, part)
+            file:seek('set', offset)
+            local s, err = file:read(len)
+            if part.is_tmpfile then
+                file:close()
+            end
+
+            if err then
+                return nil, string.format('failed to read file %q in %q: %s',
+                                          part.filename, part.name, err)
+            end
+            return self:write(s)
+        end,
     }, 'test_boundary'))
     assert.equal(n, #str)
     for _, part in ipairs({
