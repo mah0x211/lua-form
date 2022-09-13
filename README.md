@@ -78,7 +78,9 @@ add a `val` for `key`.
 
 ## val = f:get( key [, all] )
 
-get the first `val` in the list of valeues associated with `key`.
+get the first `val` in the list of valeues associated with `key`. also, if `all` argument is `true`, get a list of values.
+
+**NOTE:** if the value type is `table`, return the `data` field of the table.
 
 **Parameters**
 
@@ -98,9 +100,17 @@ local form = require('form')
 local f = form.new()
 f:add('foo', 'bar')
 f:add('foo', 'baz')
+f:add('foo', {
+    data = 'qux',
+})
 print(dump(f:get('foo'))) -- "bar"
-print(dump(f:get('foo', true))) -- { "bar", "baz" }
+print(dump(f:get('foo', true))) -- { "bar", "baz", "qux" }
 ```
+
+
+## val = f:getraw( key [, all] )
+
+equivalent to `f:get` method but this method returns a raw value.
 
 
 ## iter = f:pairs()

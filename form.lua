@@ -22,6 +22,7 @@
 local find = string.find
 local type = type
 local isa = require('isa')
+local is_boolean = isa.boolean
 local is_string = isa.string
 local is_table = isa.table
 local is_file = isa.file
@@ -43,6 +44,12 @@ function Form:init()
     return self
 end
 
+local VALID_DATATYPE = {
+    ['string'] = true,
+    ['number'] = true,
+    ['boolean'] = true,
+}
+
 --- get
 --- @param key string
 --- @param all boolean
@@ -50,19 +57,49 @@ end
 function Form:get(key, all)
     if not is_string(key) then
         error('key must be string', 2)
+    elseif all ~= nil and not is_boolean(all) then
+        error('all must be boolean', 2)
     end
 
     local vals = self.data[key]
     if vals then
-        return all == true and vals or vals[1]
+        if all then
+            local list = {}
+            for i = 1, #vals do
+                local val = vals[i]
+                if VALID_DATATYPE[type(val)] then
+                    list[#list + 1] = val
+                else
+                    list[#list + 1] = val.data
+                end
+            end
+            return list
+        end
+
+        local val = vals[1]
+        if VALID_DATATYPE[type(val)] then
+            return val
+        end
+        return val.data
     end
 end
 
-local VALID_DATATYPE = {
-    ['string'] = true,
-    ['number'] = true,
-    ['boolean'] = true,
-}
+--- getraw
+--- @param key string
+--- @param all boolean
+--- @return string|number|boolean|table|nil val
+function Form:getraw(key, all)
+    if not is_string(key) then
+        error('key must be string', 2)
+    elseif all ~= nil and not is_boolean(all) then
+        error('all must be boolean', 2)
+    end
+
+    local vals = self.data[key]
+    if vals then
+        return all and vals or vals[1]
+    end
+end
 
 --- verify_multipart_data
 --- @param v any
