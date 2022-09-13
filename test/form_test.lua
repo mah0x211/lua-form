@@ -29,19 +29,102 @@ function testcase.get()
     local f = form.new()
     assert(f:add('foo', 'bar'))
     assert(f:add('foo', 'baz'))
+    assert(f:add('qux', 'baa'))
+    assert(f:add('qux', {
+        data = 'quux',
+    }))
+    assert(f:add('qux', {
+        data = 'corge',
+    }))
+    assert(f:add('qux', {
+        filename = 'hello.txt',
+        pathname = 'hello.txt',
+    }))
+    assert(f:add('qux', {
+        data = 'grault',
+    }))
+    assert(f:add('hello', {
+        data = 'world',
+    }))
 
     -- test that get a first value for key
     assert.equal(f:get('foo'), 'bar')
+    assert.equal(f:get('qux'), 'baa')
+    assert.equal(f:get('hello'), 'world')
 
     -- test that get values for key
     assert.equal(f:get('foo', true), {
         'bar',
         'baz',
     })
+    assert.equal(f:get('qux', true), {
+        'baa',
+        'quux',
+        'corge',
+        'grault',
+    })
 
     -- test that throws an error if key is invalid
-    local err = assert.throws(f.get, 123)
+    local err = assert.throws(f.get, f, 123)
     assert.match(err, 'key must be string')
+
+    -- test that throws an error if all is invalid
+    err = assert.throws(f.get, f, 'key', {})
+    assert.match(err, 'all must be boolean')
+end
+
+function testcase.getraw()
+    local f = form.new()
+    assert(f:add('foo', 'bar'))
+    assert(f:add('foo', 'baz'))
+    assert(f:add('qux', 'baa'))
+    assert(f:add('qux', {
+        data = 'quux',
+    }))
+    assert(f:add('qux', {
+        data = 'corge',
+    }))
+    assert(f:add('qux', {
+        filename = 'hello.txt',
+        pathname = 'hello.txt',
+    }))
+    assert(f:add('qux', {
+        data = 'grault',
+    }))
+
+    -- test that get a first raw value for key
+    assert.equal(f:getraw('foo'), 'bar')
+    assert.equal(f:getraw('qux'), 'baa')
+
+    -- test that get raw values for key
+    assert.equal(f:getraw('foo', true), {
+        'bar',
+        'baz',
+    })
+    assert.equal(f:getraw('qux', true), {
+        'baa',
+        {
+            data = 'quux',
+        },
+        {
+            data = 'corge',
+        },
+        {
+            filename = 'hello.txt',
+            pathname = 'hello.txt',
+        },
+        {
+            data = 'grault',
+        },
+    })
+
+    -- test that throws an error if key is invalid
+    local err = assert.throws(f.getraw, f, 123)
+    assert.match(err, 'key must be string')
+
+    -- test that throws an error if all is invalid
+    err = assert.throws(f.getraw, f, 'key', {})
+    assert.match(err, 'all must be boolean')
 end
 
 function testcase.set()
@@ -68,7 +151,7 @@ function testcase.set()
         },
     }) do
         assert.is_true(f:set('foo', v))
-        assert.equal(f:get('foo', true), {
+        assert.equal(f:getraw('foo', true), {
             v,
         })
     end
@@ -151,7 +234,7 @@ function testcase.add()
     }) do
         assert.is_true(f:add('foo', v))
         exp[#exp + 1] = v
-        assert.equal(f:get('foo', true), exp)
+        assert.equal(f:getraw('foo', true), exp)
     end
 
     -- test that throws an error if key is invalid
