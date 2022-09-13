@@ -251,7 +251,9 @@ function testcase.pairs()
     local f = form.new()
     f:add('foo', 'bar')
     f:add('foo', 'baz')
-    f:add('qux', 'quux')
+    f:add('qux', {
+        data = 'quux',
+    })
 
     -- test that iterate key-value pairs
     local data = {
@@ -271,6 +273,30 @@ function testcase.pairs()
         end
     end
     assert.equal(data, {})
+
+    data = {
+        {
+            foo = 'bar',
+            qux = {
+                data = 'quux',
+            },
+        },
+        {
+            foo = 'baz',
+        },
+    }
+    for key, val, vidx in f:pairs(true) do
+        assert.equal(data[vidx][key], val)
+        data[vidx][key] = nil
+        if not next(data[vidx]) then
+            data[vidx] = nil
+        end
+    end
+    assert.equal(data, {})
+
+    -- test that throws an error if argument is invalid
+    local err = assert.throws(f.pairs, f, {})
+    assert.match(err, 'raw must be boolean')
 end
 
 function testcase.encode_urlencoded()
