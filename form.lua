@@ -195,8 +195,13 @@ function Form:add(key, val)
 end
 
 --- pairs
+--- @param raw boolean
 --- @return function next
-function Form:pairs()
+function Form:pairs(raw)
+    if raw ~= nil and not is_boolean(raw) then
+        error('raw must be boolean', 2)
+    end
+
     local data = self.data
     local key, values = next(data)
     local vidx = 0
@@ -204,11 +209,17 @@ function Form:pairs()
     return function()
         repeat
             if values then
-                vidx = vidx + 1
-                if values[vidx] then
-                    return key, values[vidx], vidx
-                end
-                vidx = 0
+                repeat
+                    vidx = vidx + 1
+                    local val = values[vidx]
+                    if not val then
+                        vidx = 0
+                    elseif raw or VALID_DATATYPE[type(val)] then
+                        return key, val, vidx
+                    elseif val.data then
+                        return key, val.data, vidx
+                    end
+                until vidx == 0
             end
 
             key, values = next(data, key)

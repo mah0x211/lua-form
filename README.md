@@ -113,9 +113,13 @@ print(dump(f:get('foo', true))) -- { "bar", "baz", "qux" }
 equivalent to `f:get` method but this method returns a raw value.
 
 
-## iter = f:pairs()
+## iter = f:pairs( [raw] )
 
 get the iterator function.
+
+**Parameters**
+
+- `raw:boolean`: if `true` is specified, the iterator function returns a raw value.
 
 **Returns**
 
@@ -123,7 +127,7 @@ get the iterator function.
     ```
     key, val, vidx = iter()
     - key:string: key string.
-    - val:boolean|string|number: value associated with key.
+    - val:boolean|string|number|table: value associated with key.
     - vidx:integer: an index number in the list of values.
     ```
 
