@@ -223,34 +223,41 @@ function Form:pairs(raw)
     end
 end
 
+--- @class form.writer
+--- @field write fun(self, s:string):(n:integer, err:any)
+--- @field writefile fun(self, f:file*, len:integer, offset:integer, part:table):(n:integer, err:any)
+
 --- encode
---- @param writer table|userdata
+--- @param writer form.writer
 --- @param boundary string?
---- @return integer? nbyte
+--- @return integer|string? res
 --- @return any err
 function Form:encode(writer, boundary)
     if boundary == nil then
-        return encode_urlencoded(writer, self.data)
+        return encode_urlencoded(self.data, nil, writer)
     end
-    return encode_multipart(writer, self.data, boundary)
+    return encode_multipart(self.data, boundary, writer)
 end
 
 Form = require('metamodule').new(Form)
 
+--- @class form.reader
+--- @field read fun(self, chunksize:integer):string
+
 --- decode
----@param reader table|userdata
+---@param chunk string|form.reader
 ---@param chunksize integer?
 ---@param boundary string?
 ---@param maxsize integer?
 ---@param filetmpl string?
 ---@return form? form
 ---@return any err
-local function decode(reader, chunksize, boundary, maxsize, filetmpl)
+local function decode(chunk, chunksize, boundary, maxsize, filetmpl)
     local data, err
     if boundary == nil then
-        data, err = decode_urlencoded(reader, chunksize)
+        data, err = decode_urlencoded(chunk, nil, chunksize)
     elseif type(boundary) == 'string' then
-        data, err = decode_multipart(reader, boundary, filetmpl, maxsize,
+        data, err = decode_multipart(chunk, boundary, filetmpl, maxsize,
                                      chunksize)
     end
     if err then

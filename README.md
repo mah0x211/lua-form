@@ -22,19 +22,20 @@ creating a form object.
 - `f:form`: a form object.
 
 
-## f, err = form.decode( reader [, chunksize [, boundary [, maxsize [, filetmpl]]]] )
+## f, err = form.decode( chunk [, chunksize [, boundary [, maxsize [, filetmpl]]]] )
 
 create a form object from a string in `application/x-form-urlencoded` or `multipart/form-data` encoded format.
 
 **Parameters**
 
-- `reader:table|userdata`: read the encoded string with the `reader:read` method.
-    ```
-    s, err = reader:read( n )
-    - n:integer: number of bytes read.
-    - s:string: a string in `application/x-form-urlencoded` or `multipart/form-data` format.
-    - err:any: error value.
-    ```
+- `chunk:string|table|userdata`: a string in `application/x-form-urlencoded` or `multipart/form-data` format.
+    -  if the `chunk` parameter is not string, it must have the `chunk.read` method that reads the encoded string.
+        ```
+        s, err = chunk:read( chunksize )
+        - s:string: a string in `application/x-form-urlencoded` or `multipart/form-data` format.
+        - err:any: error value.
+        - chunksize:integer: number of bytes read.
+        ```
 - `chunksize:integer`: number of byte to read from the `reader.read` method. this value must be greater than `0`. (default: `4096`)
 - `boundary:string`: if specify a boundary string, treat the loaded string as `multipart/form-data`.
 - `filetmpl:string`: template for the filename to be created. the filename will be appended with `_XXXXXX` at the end. the `_XXXXXXXX` will be a random string. (default: `/tmp/lua_form_multipart_XXXXXX`)
@@ -148,7 +149,7 @@ end
 ```
 
 
-## n, err = f:encode( writer [, boundary] )
+## res, err = f:encode( [writer [, boundary]] )
 
 encode the form into a string in `application/x-form-urlencoded` or `multipart/form-data` format.
 
@@ -175,6 +176,8 @@ encode the form into a string in `application/x-form-urlencoded` or `multipart/f
 
 **Returns**
 
-- `n:integer`: number of bytes written.
+- `res:string|integer`: a string in `application/x-form-urlencoded` or `multipart/form-data` format, or number of bytes written.
+    - if the `writer` parameter is not specified, it returns a string in `application/x-form-urlencoded` or `multipart/form-data` format.
+    - otherwise, it returns the number of bytes written to the `writer:write` and `writer:writefile` methods.
 - `err:any`: error value.
 
