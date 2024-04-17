@@ -13,8 +13,8 @@ description = {
 dependencies = {
     "lua >= 5.1",
     "isa >= 0.3.0",
-    "form-urlencoded >= 0.1.1",
-    "form-multipart >= 0.3.1",
+    "form-urlencoded ~= 0.1",
+    "form-multipart ~= 0.3",
     "metamodule >= 0.4.0",
 }
 build = {
