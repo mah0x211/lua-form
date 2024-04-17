@@ -1,6 +1,10 @@
 name: test
 
-on: [push]
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
 
 jobs:
   luacheck:
@@ -48,25 +52,6 @@ jobs:
     -
       name: Setup Luarocks
       uses: leafo/gh-actions-luarocks@v4
-    -
-      name: Cache lua modules
-      id: cache-luarocks
-      uses: actions/cache@v3
-      env:
-        cache-name: cache-lua-modules
-      with:
-        path: .luarocks
-        key: ${{ runner.os }}-${{ matrix.lua-version }}-cache-${{ hashFiles('rockspecs/form-dev-1.rockspec') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ matrix.lua-version }}-cache-
-    -
-      if: ${{ steps.cache-luarocks.outputs.cache-hit == 'true' }}
-      name: Remove must re-installation modules
-      continue-on-error: true
-      run: |
-        luarocks remove errno --force
-        luarocks remove error --force
-        luarocks remove lauxhlib --force
     -
       name: Install
       run: |
