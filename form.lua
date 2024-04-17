@@ -21,11 +21,7 @@
 --
 local find = string.find
 local type = type
-local isa = require('isa')
-local is_boolean = isa.boolean
-local is_string = isa.string
-local is_table = isa.table
-local is_file = isa.file
+local is_file = require('lauxhlib.is').file
 local urlencoded = require('form.urlencoded')
 local encode_urlencoded = urlencoded.encode
 local decode_urlencoded = urlencoded.decode
@@ -53,11 +49,11 @@ local VALID_DATATYPE = {
 --- get
 --- @param key string
 --- @param all boolean
---- @return string|number|boolean|table|nil val
+--- @return string|number|boolean|table? val
 function Form:get(key, all)
-    if not is_string(key) then
+    if type(key) ~= 'string' then
         error('key must be string', 2)
-    elseif all ~= nil and not is_boolean(all) then
+    elseif all ~= nil and type(all) ~= 'boolean' then
         error('all must be boolean', 2)
     end
 
@@ -87,11 +83,11 @@ end
 --- getraw
 --- @param key string
 --- @param all boolean
---- @return string|number|boolean|table|nil val
+--- @return string|number|boolean|table? val
 function Form:getraw(key, all)
-    if not is_string(key) then
+    if type(key) ~= 'string' then
         error('key must be string', 2)
-    elseif all ~= nil and not is_boolean(all) then
+    elseif all ~= nil and type(all) ~= 'boolean' then
         error('all must be boolean', 2)
     end
 
@@ -105,9 +101,9 @@ end
 --- @param v any
 --- @return table
 local function verify_multipart_data(v)
-    if not is_table(v) then
+    if type(v) ~= 'table' then
         error('val must be boolean, string, number or table', 3)
-    elseif v.header ~= nil and not is_table(v.header) then
+    elseif v.header ~= nil and type(v.header) ~= 'table' then
         -- invalid header field
         error('header field must be table', 3)
     elseif v.filename == nil then
@@ -118,11 +114,11 @@ local function verify_multipart_data(v)
             header = v.header,
             data = v.data,
         }
-    elseif not is_string(v.filename) then
+    elseif type(v.filename) ~= 'string' then
         -- invalid filename field
         error('filename field must be string', 3)
     elseif v.file == nil then
-        if not is_string(v.pathname) then
+        if type(v.pathname) ~= 'string' then
             error('pathname field must be string', 3)
         end
         return {
@@ -144,10 +140,10 @@ end
 
 --- set
 --- @param key string
---- @param val string|boolean|number|table|nil
+--- @param val string|boolean|number|table?
 --- @return boolean ok
 function Form:set(key, val)
-    if not is_string(key) or find(key, '%s') then
+    if type(key) ~= 'string' or find(key, '%s') then
         error('key must be string with no spaces', 2)
     elseif val == nil then
         -- remove the value for key
@@ -175,7 +171,7 @@ end
 --- @param val string|boolean|number|table
 --- @return boolean ok
 function Form:add(key, val)
-    if not is_string(key) or find(key, '%s') then
+    if type(key) ~= 'string' or find(key, '%s') then
         error('key must be string with no spaces', 2)
     elseif not VALID_DATATYPE[type(val)] then
         val = verify_multipart_data(val)
@@ -198,7 +194,7 @@ end
 --- @param raw boolean
 --- @return function next
 function Form:pairs(raw)
-    if raw ~= nil and not is_boolean(raw) then
+    if raw ~= nil and type(raw) ~= 'boolean' then
         error('raw must be boolean', 2)
     end
 
@@ -229,8 +225,8 @@ end
 
 --- encode
 --- @param writer table|userdata
---- @param boundary string|nil
---- @return integer|nil nbyte
+--- @param boundary string?
+--- @return integer? nbyte
 --- @return any err
 function Form:encode(writer, boundary)
     if boundary == nil then
@@ -243,17 +239,17 @@ Form = require('metamodule').new(Form)
 
 --- decode
 ---@param reader table|userdata
----@param chunksize integer|nil
----@param boundary string|nil
----@param maxsize integer|nil
----@param filetmpl string|nil
----@return form|nil form
+---@param chunksize integer?
+---@param boundary string?
+---@param maxsize integer?
+---@param filetmpl string?
+---@return form? form
 ---@return any err
 local function decode(reader, chunksize, boundary, maxsize, filetmpl)
     local data, err
     if boundary == nil then
         data, err = decode_urlencoded(reader, chunksize)
-    elseif is_string(boundary) then
+    elseif type(boundary) == 'string' then
         data, err = decode_multipart(reader, boundary, filetmpl, maxsize,
                                      chunksize)
     end
