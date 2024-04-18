@@ -245,14 +245,14 @@ Form = require('metamodule').new(Form)
 --- @field read fun(self, chunksize:integer):string
 
 --- decode
----@param chunk string|form.reader
----@param chunksize integer?
----@param boundary string?
----@param maxsize integer?
----@param filetmpl string?
----@return form? form
----@return any err
-local function decode(chunk, chunksize, boundary, maxsize, filetmpl)
+--- @param chunk string|form.reader
+--- @param boundary string?
+--- @param maxsize integer?
+--- @param filetmpl string?
+--- @param chunksize integer?
+--- @return form? form
+--- @return any err
+local function decode(chunk, boundary, maxsize, filetmpl, chunksize)
     local data, err
     if boundary == nil then
         data, err = decode_urlencoded(chunk, nil, chunksize)

@@ -22,7 +22,7 @@ creating a form object.
 - `f:form`: a form object.
 
 
-## f, err = form.decode( chunk [, chunksize [, boundary [, maxsize [, filetmpl]]]] )
+## f, err = form.decode( chunk [, boundary [, maxsize [, filetmpl [, chunksize]]]] )
 
 create a form object from a string in `application/x-form-urlencoded` or `multipart/form-data` encoded format.
 
@@ -36,10 +36,10 @@ create a form object from a string in `application/x-form-urlencoded` or `multip
         - err:any: error value.
         - chunksize:integer: number of bytes read.
         ```
-- `chunksize:integer`: number of byte to read from the `reader.read` method. this value must be greater than `0`. (default: `4096`)
-- `boundary:string`: if specify a boundary string, treat the loaded string as `multipart/form-data`.
+- `boundary:string`: if specify a boundary string, treat the `chunk` string or loaded string as `multipart/form-data`.
 - `filetmpl:string`: template for the filename to be created. the filename will be appended with `_XXXXXX` at the end. the `_XXXXXXXX` will be a random string. (default: `/tmp/lua_form_multipart_XXXXXX`)
 - `maxsize:integer`: limit the maximum size per file.
+- `chunksize:integer`: number of byte to read from the `reader.read` method. this value must be greater than `0`. (default: `4096`)
 
 
 **Returns**
@@ -48,7 +48,7 @@ create a form object from a string in `application/x-form-urlencoded` or `multip
 - `err:any`: error value
 
 
-## ok = f:set( key [, val] )
+## ok = form:set( key [, val] )
 
 sets a `key`/`val` pair. if `val` is `nil`, the value associated with `key` will be removed.
 
@@ -67,7 +67,7 @@ sets a `key`/`val` pair. if `val` is `nil`, the value associated with `key` will
 - `ok:boolean`: `true` on success.
 
 
-## f:add( key val )
+## form:add( key val )
 
 add a `val` for `key`.
 
@@ -77,7 +77,7 @@ add a `val` for `key`.
 - `val:boolean|string|number|table`: same of `f:set()`.
 
 
-## val = f:get( key [, all] )
+## val = form:get( key [, all] )
 
 get the first `val` in the list of valeues associated with `key`. also, if `all` argument is `true`, get a list of values.
 
@@ -109,12 +109,12 @@ print(dump(f:get('foo', true))) -- { "bar", "baz", "qux" }
 ```
 
 
-## val = f:getraw( key [, all] )
+## val = form:getraw( key [, all] )
 
-equivalent to `f:get` method but this method returns a raw value.
+equivalent to `form:get` method but this method returns a raw value.
 
 
-## iter = f:pairs( [raw] )
+## iter = form:pairs( [raw] )
 
 get the iterator function.
 
@@ -149,7 +149,7 @@ end
 ```
 
 
-## res, err = f:encode( [boundary [, writer]] )
+## res, err = form:encode( [boundary [, writer]] )
 
 encode the form into a string in `application/x-form-urlencoded` or `multipart/form-data` format.
 

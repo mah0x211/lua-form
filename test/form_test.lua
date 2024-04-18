@@ -597,7 +597,7 @@ function testcase.decode_multipart()
                 return s
             end
         end,
-    }, nil, 'test_boundary'))
+    }, 'test_boundary'))
     assert.is_nil(err)
     assert.equal(#str, 0)
     assert.equal(f.data, {
@@ -677,7 +677,7 @@ function testcase.decode_multipart_without_reader()
         }, '\r\n'),
         '--test_boundary--',
     }, '\r\n')
-    local f, err = assert(form.decode(str, nil, 'test_boundary'))
+    local f, err = assert(form.decode(str, 'test_boundary'))
     assert.is_nil(err)
     assert.equal(f.data, {
         foo = {
