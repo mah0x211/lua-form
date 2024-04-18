@@ -149,13 +149,14 @@ end
 ```
 
 
-## res, err = f:encode( [writer [, boundary]] )
+## res, err = f:encode( [boundary [, writer]] )
 
 encode the form into a string in `application/x-form-urlencoded` or `multipart/form-data` format.
 
 **Parameters**
 
-- `writer:table|userdata`: call the `writer:write` method to output a string.
+- `boundary:string`: if specify a boundary string, this form will be encoded in `multipart/form-data`.
+- `writer:table|userdata`: call the `writer:write` and `writer:writefile` methods to output a string.
     ```
     n, err = writer:write( s )
     - n:integer: number of bytes written.
@@ -171,8 +172,6 @@ encode the form into a string in `application/x-form-urlencoded` or `multipart/f
     - offset:integer: file offset at which to begin the writeout.
     - part:table: a file data that contains the `filename` and `file` fields. if `part.is_tmpfile` is `true`, `file` must be closed by this method.
     ```
-- `boundary:string`: if specify a boundary string, this form will be encoded in `multipart/form-data`.
-
 
 **Returns**
 

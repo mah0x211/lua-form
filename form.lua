@@ -228,11 +228,11 @@ end
 --- @field writefile fun(self, f:file*, len:integer, offset:integer, part:table):(n:integer, err:any)
 
 --- encode
---- @param writer form.writer
 --- @param boundary string?
+--- @param writer? form.writer
 --- @return integer|string? res
 --- @return any err
-function Form:encode(writer, boundary)
+function Form:encode(boundary, writer)
     if boundary == nil then
         return encode_urlencoded(self.data, nil, writer)
     end

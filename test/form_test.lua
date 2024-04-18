@@ -314,7 +314,7 @@ function testcase.encode_urlencoded()
 
     -- test that encode to x-form-urlencoded format
     local str = ''
-    local n = assert(f:encode({
+    local n = assert(f:encode(nil, {
         write = function(_, s)
             str = str .. s
             return #s
@@ -434,7 +434,7 @@ function testcase.encode_multipart()
 
     -- test that encode to x-form-urlencoded format
     local str = ''
-    local n = assert(f:encode({
+    local n = assert(f:encode('test_boundary', {
         write = function(_, s)
             str = str .. s
             return #s
@@ -452,7 +452,7 @@ function testcase.encode_multipart()
             end
             return self:write(s)
         end,
-    }, 'test_boundary'))
+    }))
     assert.equal(n, #str)
     for _, part in ipairs({
         table.concat({
@@ -513,7 +513,7 @@ function testcase.encode_multipart_without_writer()
     f:add('qux', 'quux')
 
     -- test that encode to x-form-urlencoded format
-    local str = assert(f:encode(nil, 'test_boundary'))
+    local str = assert(f:encode('test_boundary'))
     assert.is_string(str)
     for _, part in ipairs({
         table.concat({
