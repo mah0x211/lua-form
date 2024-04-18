@@ -1,5 +1,6 @@
 require('luacov')
 local testcase = require('testcase')
+local assert = require('assert')
 local form = require('form')
 
 local FILE = io.tmpfile()
@@ -313,13 +314,40 @@ function testcase.encode_urlencoded()
 
     -- test that encode to x-form-urlencoded format
     local str = ''
-    local n = assert(f:encode({
+    local n = assert(f:encode(nil, {
         write = function(_, s)
             str = str .. s
             return #s
         end,
     }))
     assert.equal(n, #str)
+    local kvpairs = {}
+    for kv in string.gmatch(str, '([^&]+)') do
+        kvpairs[#kvpairs + 1] = kv
+    end
+    table.sort(kvpairs)
+    assert.equal(kvpairs, {
+        'foo=baa',
+        'foo=bar',
+        'qux=quux',
+    })
+end
+
+function testcase.encode_urlencoded_without_writer()
+    local f = form.new()
+    f:add('foo', 'bar')
+    f:add('foo', {
+        header = {
+            hello = 'world',
+        },
+        data = 'baz',
+    })
+    f:add('foo', 'baa')
+    f:add('qux', 'quux')
+
+    -- test that encode to x-form-urlencoded format
+    local str = assert(f:encode())
+    assert.is_string(str)
     local kvpairs = {}
     for kv in string.gmatch(str, '([^&]+)') do
         kvpairs[#kvpairs + 1] = kv
@@ -370,6 +398,26 @@ function testcase.decode_urlencoded()
     assert.match(err, 'read error')
 end
 
+function testcase.decode_urlencoded_without_reader()
+    -- test that decode x-form-urlencoded format string to form
+    local str = table.concat({
+        'foo=baa',
+        'foo=bar',
+        'qux=quux',
+    }, '&')
+    local f, err = assert(form.decode(str))
+    assert.is_nil(err)
+    assert.equal(f.data, {
+        foo = {
+            'baa',
+            'bar',
+        },
+        qux = {
+            'quux',
+        },
+    })
+end
+
 function testcase.encode_multipart()
     local f = form.new()
     f:add('foo', 'bar')
@@ -386,7 +434,7 @@ function testcase.encode_multipart()
 
     -- test that encode to x-form-urlencoded format
     local str = ''
-    local n = assert(f:encode({
+    local n = assert(f:encode('test_boundary', {
         write = function(_, s)
             str = str .. s
             return #s
@@ -404,8 +452,69 @@ function testcase.encode_multipart()
             end
             return self:write(s)
         end,
-    }, 'test_boundary'))
+    }))
     assert.equal(n, #str)
+    for _, part in ipairs({
+        table.concat({
+            '--test_boundary',
+            'Content-Disposition: form-data; name="foo"',
+            '',
+            'bar',
+            '',
+        }, '\r\n'),
+        table.concat({
+            '--test_boundary',
+            'hello: world',
+            'Content-Disposition: form-data; name="foo"',
+            '',
+            'baz',
+            '',
+        }, '\r\n'),
+        table.concat({
+            '--test_boundary',
+            'Content-Disposition: form-data; name="foo"',
+            '',
+            'baa',
+            '',
+        }, '\r\n'),
+        table.concat({
+            '--test_boundary',
+            'Content-Disposition: form-data; name="qux"',
+            '',
+            'quux',
+            '',
+        }, '\r\n'),
+        table.concat({
+            '--test_boundary--',
+        }, '\r\n'),
+    }) do
+        local head, tail = assert(string.find(str, part, nil, true))
+        if head == 1 then
+            str = string.sub(str, tail + 1)
+        else
+            str = string.sub(str, 1, head - 1) .. string.sub(str, tail + 1)
+        end
+    end
+    assert.equal(#str, 0)
+end
+
+function testcase.encode_multipart_without_writer()
+    local f = form.new()
+    f:add('foo', 'bar')
+    f:add('foo', {
+        header = {
+            hello = {
+                'world',
+            },
+        },
+        data = 'baz',
+    })
+    f:add('foo', 'baa')
+    f:add('qux', 'quux')
+
+    -- test that encode to x-form-urlencoded format
+    local str = assert(f:encode('test_boundary'))
+    assert.is_string(str)
     for _, part in ipairs({
         table.concat({
             '--test_boundary',
@@ -488,7 +597,7 @@ function testcase.decode_multipart()
                 return s
             end
         end,
-    }, nil, 'test_boundary'))
+    }, 'test_boundary'))
     assert.is_nil(err)
     assert.equal(#str, 0)
     assert.equal(f.data, {
@@ -538,3 +647,81 @@ function testcase.decode_multipart()
     })
 end
 
+function testcase.decode_multipart_without_reader()
+    -- test that decode multipart/form-data format string to form
+    local str = table.concat({
+        table.concat({
+            '--test_boundary',
+            'Content-Disposition: form-data; name="foo"',
+            '',
+            'bar',
+        }, '\r\n'),
+        table.concat({
+            '--test_boundary',
+            'hello: world',
+            'Content-Disposition: form-data; name="foo"',
+            '',
+            'baz',
+        }, '\r\n'),
+        table.concat({
+            '--test_boundary',
+            'Content-Disposition: form-data; name="foo"',
+            '',
+            'baa',
+        }, '\r\n'),
+        table.concat({
+            '--test_boundary',
+            'Content-Disposition: form-data; name="qux"',
+            '',
+            'quux',
+        }, '\r\n'),
+        '--test_boundary--',
+    }, '\r\n')
+    local f, err = assert(form.decode(str, 'test_boundary'))
+    assert.is_nil(err)
+    assert.equal(f.data, {
+        foo = {
+            {
+                header = {
+                    ['content-disposition'] = {
+                        'form-data; name="foo"',
+                    },
+                },
+                name = 'foo',
+                data = 'bar',
+            },
+            {
+                header = {
+                    hello = {
+                        'world',
+                    },
+                    ['content-disposition'] = {
+                        'form-data; name="foo"',
+                    },
+                },
+                name = 'foo',
+                data = 'baz',
+            },
+            {
+                header = {
+                    ['content-disposition'] = {
+                        'form-data; name="foo"',
+                    },
+                },
+                name = 'foo',
+                data = 'baa',
+            },
+        },
+        qux = {
+            {
+                header = {
+                    ['content-disposition'] = {
+                        'form-data; name="qux"',
+                    },
+                },
+                name = 'qux',
+                data = 'quux',
+            },
+        },
+    })
+end

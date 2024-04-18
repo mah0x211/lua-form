@@ -22,23 +22,24 @@ creating a form object.
 - `f:form`: a form object.
 
 
-## f, err = form.decode( reader [, chunksize [, boundary [, maxsize [, filetmpl]]]] )
+## f, err = form.decode( chunk [, boundary [, maxsize [, filetmpl [, chunksize]]]] )
 
 create a form object from a string in `application/x-form-urlencoded` or `multipart/form-data` encoded format.
 
 **Parameters**
 
-- `reader:table|userdata`: read the encoded string with the `reader:read` method.
-    ```
-    s, err = reader:read( n )
-    - n:integer: number of bytes read.
-    - s:string: a string in `application/x-form-urlencoded` or `multipart/form-data` format.
-    - err:any: error value.
-    ```
-- `chunksize:integer`: number of byte to read from the `reader.read` method. this value must be greater than `0`. (default: `4096`)
-- `boundary:string`: if specify a boundary string, treat the loaded string as `multipart/form-data`.
+- `chunk:string|table|userdata`: a string in `application/x-form-urlencoded` or `multipart/form-data` format.
+    -  if the `chunk` parameter is not string, it must have the `chunk.read` method that reads the encoded string.
+        ```
+        s, err = chunk:read( chunksize )
+        - s:string: a string in `application/x-form-urlencoded` or `multipart/form-data` format.
+        - err:any: error value.
+        - chunksize:integer: number of bytes read.
+        ```
+- `boundary:string`: if specify a boundary string, treat the `chunk` string or loaded string as `multipart/form-data`.
 - `filetmpl:string`: template for the filename to be created. the filename will be appended with `_XXXXXX` at the end. the `_XXXXXXXX` will be a random string. (default: `/tmp/lua_form_multipart_XXXXXX`)
 - `maxsize:integer`: limit the maximum size per file.
+- `chunksize:integer`: number of byte to read from the `reader.read` method. this value must be greater than `0`. (default: `4096`)
 
 
 **Returns**
@@ -47,7 +48,7 @@ create a form object from a string in `application/x-form-urlencoded` or `multip
 - `err:any`: error value
 
 
-## ok = f:set( key [, val] )
+## ok = form:set( key [, val] )
 
 sets a `key`/`val` pair. if `val` is `nil`, the value associated with `key` will be removed.
 
@@ -66,7 +67,7 @@ sets a `key`/`val` pair. if `val` is `nil`, the value associated with `key` will
 - `ok:boolean`: `true` on success.
 
 
-## f:add( key val )
+## form:add( key val )
 
 add a `val` for `key`.
 
@@ -76,7 +77,7 @@ add a `val` for `key`.
 - `val:boolean|string|number|table`: same of `f:set()`.
 
 
-## val = f:get( key [, all] )
+## val = form:get( key [, all] )
 
 get the first `val` in the list of valeues associated with `key`. also, if `all` argument is `true`, get a list of values.
 
@@ -108,12 +109,12 @@ print(dump(f:get('foo', true))) -- { "bar", "baz", "qux" }
 ```
 
 
-## val = f:getraw( key [, all] )
+## val = form:getraw( key [, all] )
 
-equivalent to `f:get` method but this method returns a raw value.
+equivalent to `form:get` method but this method returns a raw value.
 
 
-## iter = f:pairs( [raw] )
+## iter = form:pairs( [raw] )
 
 get the iterator function.
 
@@ -148,13 +149,14 @@ end
 ```
 
 
-## n, err = f:encode( writer [, boundary] )
+## res, err = form:encode( [boundary [, writer]] )
 
 encode the form into a string in `application/x-form-urlencoded` or `multipart/form-data` format.
 
 **Parameters**
 
-- `writer:table|userdata`: call the `writer:write` method to output a string.
+- `boundary:string`: if specify a boundary string, this form will be encoded in `multipart/form-data`.
+- `writer:table|userdata`: call the `writer:write` and `writer:writefile` methods to output a string.
     ```
     n, err = writer:write( s )
     - n:integer: number of bytes written.
@@ -170,11 +172,11 @@ encode the form into a string in `application/x-form-urlencoded` or `multipart/f
     - offset:integer: file offset at which to begin the writeout.
     - part:table: a file data that contains the `filename` and `file` fields. if `part.is_tmpfile` is `true`, `file` must be closed by this method.
     ```
-- `boundary:string`: if specify a boundary string, this form will be encoded in `multipart/form-data`.
-
 
 **Returns**
 
-- `n:integer`: number of bytes written.
+- `res:string|integer`: a string in `application/x-form-urlencoded` or `multipart/form-data` format, or number of bytes written.
+    - if the `writer` parameter is not specified, it returns a string in `application/x-form-urlencoded` or `multipart/form-data` format.
+    - otherwise, it returns the number of bytes written to the `writer:write` and `writer:writefile` methods.
 - `err:any`: error value.
 

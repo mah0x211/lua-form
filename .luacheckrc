@@ -1,9 +1,8 @@
 std = "max"
 include_files = {
-    "lib/*.lua",
+    "form.lua",
     "test/*_test.lua",
 }
 ignore = {
-    'assert',
     '631', -- line is too long.
 }
