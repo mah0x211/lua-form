@@ -39,7 +39,7 @@ create a form object from a string in `application/x-form-urlencoded` or `multip
 - `boundary:string`: if specify a boundary string, treat the `chunk` string or loaded string as `multipart/form-data`.
 - `filetmpl:string`: template for the filename to be created. the filename will be appended with `_XXXXXX` at the end. the `_XXXXXXXX` will be a random string. (default: `/tmp/lua_form_multipart_XXXXXX`)
 - `maxsize:integer`: limit the maximum size per file.
-- `chunksize:integer`: number of byte to read from the `reader.read` method. this value must be greater than `0`. (default: `4096`)
+- `chunksize:integer`: number of byte to read from the `chunk.read` method. this value must be greater than `0`. (default: `4096`)
 
 
 **Returns**
