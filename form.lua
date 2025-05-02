@@ -127,6 +127,26 @@ function Form:getraw(key, all)
     end
 end
 
+--- getrawall
+--- @param all boolean?
+--- @return table data
+function Form:getrawall(all)
+    if all ~= nil and type(all) ~= 'boolean' then
+        error('all must be boolean', 2)
+    end
+
+    local data = {}
+    for key, vals in pairs(self.data) do
+        if not all then
+            data[key] = vals[1]
+        else
+            data[key] = vals
+        end
+    end
+
+    return data
+end
+
 --- verify_multipart_data
 --- @param v any
 --- @return table

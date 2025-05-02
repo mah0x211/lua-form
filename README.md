@@ -126,6 +126,11 @@ get the first value for each form field (excluding `multipart/form-data` metadat
 equivalent to `form:get` method but this method returns a raw value.
 
 
+## data = form:getrawall( [all] )
+
+equivalent to `form:getall` method but this method returns a raw value (including `multipart/form-data` metadata). if `all` is `true`, get all values for each key as a list.
+
+
 ## iter = form:pairs( [raw] )
 
 get the iterator function.
