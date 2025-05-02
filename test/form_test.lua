@@ -74,6 +74,52 @@ function testcase.get()
     assert.match(err, 'all must be boolean')
 end
 
+function testcase.getall()
+    local f = form.new()
+    assert(f:add('foo', 'bar'))
+    assert(f:add('foo', 'baz'))
+    assert(f:add('qux', 'baa'))
+    assert(f:add('qux', {
+        data = 'quux',
+    }))
+    assert(f:add('qux', {
+        data = 'corge',
+    }))
+    assert(f:add('qux', {
+        data = 'grault',
+    }))
+    assert(f:add('uploads', {
+        filename = 'hello.txt',
+        pathname = 'hello.txt',
+    }))
+
+    -- test that get all values
+    local data = f:getall()
+    assert.equal(data, {
+        foo = 'bar',
+        qux = 'baa',
+    })
+
+    -- test that get all values as list
+    data = f:getall(true)
+    assert.equal(data, {
+        foo = {
+            'bar',
+            'baz',
+        },
+        qux = {
+            'baa',
+            'quux',
+            'corge',
+            'grault',
+        },
+    })
+
+    -- test that throws an error if all is invalid
+    local err = assert.throws(f.getall, f, {})
+    assert.match(err, 'all must be boolean')
+end
+
 function testcase.getraw()
     local f = form.new()
     assert(f:add('foo', 'bar'))
