@@ -79,7 +79,7 @@ add a `val` for `key`.
 
 ## val = form:get( key [, all] )
 
-get the first `val` in the list of valeues associated with `key`. also, if `all` argument is `true`, get a list of values.
+get the first value associated with the given key. if `all` is `true`, get all values as a list.
 
 **NOTE:** if the value type is `table`, return the `data` field of the table.
 
@@ -108,10 +108,27 @@ print(dump(f:get('foo'))) -- "bar"
 print(dump(f:get('foo', true))) -- { "bar", "baz", "qux" }
 ```
 
+## data = form:getall( [all] )
+
+get the first value for each form field (excluding `multipart/form-data` metadata). if `all` is `true`, get all values for each key as a list.
+
+**Parameters**
+
+- `all:boolean`: get a list of values if `true`.
+
+**Returns**
+
+- `data:table`: a table of all values in the form.
+
 
 ## val = form:getraw( key [, all] )
 
 equivalent to `form:get` method but this method returns a raw value.
+
+
+## data = form:getrawall( [all] )
+
+equivalent to `form:getall` method but this method returns a raw value (including `multipart/form-data` metadata). if `all` is `true`, get all values for each key as a list.
 
 
 ## iter = form:pairs( [raw] )

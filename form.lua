@@ -80,6 +80,36 @@ function Form:get(key, all)
     end
 end
 
+--- getall
+--- @param all boolean?
+--- @return table data
+function Form:getall(all)
+    if all ~= nil and type(all) ~= 'boolean' then
+        error('all must be boolean', 2)
+    end
+
+    local data = {}
+    for key, vals in pairs(self.data) do
+        if not all then
+            local val = vals[1]
+            data[key] = VALID_DATATYPE[type(val)] and val or val.data
+        else
+            local list = {}
+            for i = 1, #vals do
+                local val = vals[i]
+                if VALID_DATATYPE[type(val)] then
+                    list[#list + 1] = val
+                else
+                    list[#list + 1] = val.data
+                end
+            end
+            data[key] = #list > 0 and list or nil
+        end
+    end
+
+    return data
+end
+
 --- getraw
 --- @param key string
 --- @param all boolean
@@ -95,6 +125,26 @@ function Form:getraw(key, all)
     if vals then
         return all and vals or vals[1]
     end
+end
+
+--- getrawall
+--- @param all boolean?
+--- @return table data
+function Form:getrawall(all)
+    if all ~= nil and type(all) ~= 'boolean' then
+        error('all must be boolean', 2)
+    end
+
+    local data = {}
+    for key, vals in pairs(self.data) do
+        if not all then
+            data[key] = vals[1]
+        else
+            data[key] = vals
+        end
+    end
+
+    return data
 end
 
 --- verify_multipart_data
