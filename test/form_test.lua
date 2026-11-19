@@ -717,18 +717,21 @@ function testcase.decode_multipart()
                     },
                 },
                 name = 'foo',
+                params = {
+                    name = 'foo',
+                },
                 data = 'bar',
             },
             {
                 header = {
-                    hello = {
-                        'world',
-                    },
                     ['content-disposition'] = {
                         'form-data; name="foo"',
                     },
                 },
                 name = 'foo',
+                params = {
+                    name = 'foo',
+                },
                 data = 'baz',
             },
             {
@@ -738,6 +741,9 @@ function testcase.decode_multipart()
                     },
                 },
                 name = 'foo',
+                params = {
+                    name = 'foo',
+                },
                 data = 'baa',
             },
         },
@@ -749,6 +755,9 @@ function testcase.decode_multipart()
                     },
                 },
                 name = 'qux',
+                params = {
+                    name = 'qux',
+                },
                 data = 'quux',
             },
         },
@@ -796,18 +805,21 @@ function testcase.decode_multipart_without_reader()
                     },
                 },
                 name = 'foo',
+                params = {
+                    name = 'foo',
+                },
                 data = 'bar',
             },
             {
                 header = {
-                    hello = {
-                        'world',
-                    },
                     ['content-disposition'] = {
                         'form-data; name="foo"',
                     },
                 },
                 name = 'foo',
+                params = {
+                    name = 'foo',
+                },
                 data = 'baz',
             },
             {
@@ -817,6 +829,9 @@ function testcase.decode_multipart_without_reader()
                     },
                 },
                 name = 'foo',
+                params = {
+                    name = 'foo',
+                },
                 data = 'baa',
             },
         },
@@ -828,6 +843,9 @@ function testcase.decode_multipart_without_reader()
                     },
                 },
                 name = 'qux',
+                params = {
+                    name = 'qux',
+                },
                 data = 'quux',
             },
         },

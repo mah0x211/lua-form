@@ -5,27 +5,61 @@ on:
     paths-ignore:
       - '**.md'
       - 'LICENSE'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+
+permissions:
+  contents: read
 
 jobs:
-  luacheck:
+  head-checks:
+    name: Check existing head CI
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      workflow_state: ${{ steps.head.outputs.workflow_state }}
+    steps:
+    -
+      name: Inspect existing push CI
+      if: github.event_name == 'pull_request'
+      id: head
+      uses: mah0x211/head-checks-status@v1
+
+  luacheck:
+    needs: head-checks
+    if: >-
+      github.event_name == 'push' ||
+      !contains(
+        fromJSON('["success", "queued", "in_progress"]'),
+        needs.head-checks.outputs.workflow_state
+      )
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/mah0x211/lua-ci:latest
     steps:
     -
       name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v7
+      with:
+        persist-credentials: false
     -
-      name: Setup Lua
-      uses: mah0x211/setup-lua@v1
-    -
-      name: Install Tools
+      name: Install luacheck
       run: luarocks install luacheck
     -
       name: Run luacheck
-      run: |
-        luacheck .
+      run: luacheck .
 
   test:
+    needs: luacheck
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/mah0x211/lua-ci:latest
     strategy:
       matrix:
         lua-version:
@@ -33,34 +67,39 @@ jobs:
           - "5.2.:latest"
           - "5.3.:latest"
           - "5.4.:latest"
+          - "5.5.:latest"
           - "lj-v2.1:latest"
     steps:
     -
-      name: Checkout
-      uses: actions/checkout@v2
-      with:
-        submodules: 'true'
-    -
-      name: Setup Lua ${{ matrix.lua-version }}
-      uses: mah0x211/setup-lua@v1
-      with:
-        versions: ${{ matrix.lua-version }}
-    -
-      name: Install
+      name: Switch Lua version
       run: |
-        luarocks make
+        lenv -g use ${{ matrix.lua-version }}
+        lua -v
     -
-      name: Install Test Tools
+      name: Checkout
+      uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    -
+      name: Install form
+      run: luarocks make rockspecs/form-dev-1.rockspec
+    -
+      name: Install test tools
       run: |
         luarocks install luacov
         luarocks install testcase
     -
-      name: Run Test
+      name: Run tests with Lua coverage
       run: |
         testcase --coverage ./test/
+        test -s ./luacov.report.out
     -
-      name: Upload lua coverage to Codecov
-      uses: codecov/codecov-action@v4
+      name: Upload Lua coverage to Codecov
+      # Fork pull requests generally cannot request an OIDC token.
+      if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+      uses: codecov/codecov-action@v7
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        use_oidc: true
+        disable_search: true
+        files: ./luacov.report.out
         flags: unittests

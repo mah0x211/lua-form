@@ -273,16 +273,42 @@ function Form:pairs(raw)
     end
 end
 
---- @class form.writer
---- @field write fun(self, s:string):(n:integer, err:any)
---- @field writefile fun(self, f:file*, len:integer, offset:integer, part:table):(n:integer, err:any)
+--- @class form.urlencoded.writer
+--- @field write fun(self, s:string):(n:integer?, err:any)
 
---- encode
---- @param boundary string?
---- @param writer? form.writer
+--- @class form.writer
+--- @field write fun(self, s:string):(n:integer?, err:any, timeout:boolean?)
+--- @field writefile fun(self, f:file*, len:integer, offset:integer, part:table):(n:integer?, err:any, timeout:boolean?)
+
+--- @class form.encode_options
+--- @field boundary? string Multipart boundary. Omit for URL-encoded output.
+--- @field deeply? boolean URL-encoded only.
+--- @field writer? form.urlencoded.writer|form.writer
+
+--- encode with options
+--- @param self form
+--- @param opts form.encode_options
 --- @return integer|string? res
 --- @return any err
-function Form:encode(boundary, writer)
+--- @return boolean? timeout Multipart only.
+local function encode_with_opts(self, opts)
+    if opts.boundary == nil then
+        return encode_urlencoded(self.data, opts.deeply, opts.writer)
+    end
+    return encode_multipart(self.data, opts.boundary, opts.writer)
+end
+
+--- encode
+--- @param ... form.encode_options|string|nil Options, or legacy boundary, writer.
+--- @return integer|string? res
+--- @return any err
+--- @return boolean? timeout Multipart only.
+function Form:encode(...)
+    local boundary, writer = ...
+    if select('#', ...) == 1 and type(boundary) == 'table' then
+        return encode_with_opts(self, boundary)
+    end
+
     if boundary == nil then
         return encode_urlencoded(self.data, nil, writer)
     end
@@ -292,26 +318,78 @@ end
 Form = require('metamodule').new(Form)
 
 --- @class form.reader
---- @field read fun(self, chunksize:integer):string
+--- @field read fun(self, chunksize:integer):(s:string?, err:any, timeout:boolean?)
+
+--- @class form.decode_writer
+--- @field writefile fun(self, f:file*, s:string):(n:integer?, err:any, timeout:boolean?)
+
+--- @class form.decode_options
+--- @field boundary? string Multipart boundary. Omit for URL-encoded input.
+--- @field chunksize? integer
+--- @field deeply? boolean URL-encoded only.
+--- @field maxsize? number
+--- @field filetmpl? string Multipart only.
+--- @field maxfilesize? integer Multipart only.
+--- @field maxparts? integer Multipart only.
+--- @field writer? form.decode_writer Multipart only.
+
+--- decode with options
+--- @param chunk string|form.reader
+--- @param opts form.decode_options
+--- @return form? form
+--- @return any err
+--- @return boolean? timeout Multipart only.
+local function decode_with_opts(chunk, opts)
+    local boundary = opts.boundary
+    local data, err, timeout
+    if boundary == nil then
+        data, err = decode_urlencoded(chunk, {
+            chunksize = opts.chunksize,
+            deeply = opts.deeply,
+            maxsize = opts.maxsize,
+        })
+    else
+        data, err, timeout = decode_multipart(chunk, boundary, {
+            chunksize = opts.chunksize,
+            filetmpl = opts.filetmpl,
+            maxfilesize = opts.maxfilesize,
+            maxparts = opts.maxparts,
+            maxsize = opts.maxsize,
+            writer = opts.writer,
+        })
+    end
+
+    if err or timeout then
+        return nil, err, timeout
+    end
+
+    local form = Form()
+    form.data = data
+    return form
+end
 
 --- decode
 --- @param chunk string|form.reader
---- @param boundary string?
---- @param maxsize integer?
---- @param filetmpl string?
---- @param chunksize integer?
+--- @param ... form.decode_options|string|integer|nil Options, or legacy boundary, maxfilesize, filetmpl, chunksize.
 --- @return form? form
 --- @return any err
-local function decode(chunk, boundary, maxsize, filetmpl, chunksize)
-    local data, err
+--- @return boolean? timeout Multipart only.
+local function decode(chunk, ...)
+    local boundary, maxfilesize, filetmpl, chunksize = ...
+    if select('#', ...) == 1 and type(boundary) == 'table' then
+        return decode_with_opts(chunk, boundary)
+    end
+
+    local data, err, timeout
     if boundary == nil then
         data, err = decode_urlencoded(chunk, nil, chunksize)
-    elseif type(boundary) == 'string' then
-        data, err = decode_multipart(chunk, boundary, filetmpl, maxsize,
-                                     chunksize)
+    else
+        data, err, timeout = decode_multipart(chunk, boundary, filetmpl,
+                                              maxfilesize, chunksize)
     end
-    if err then
-        return nil, err
+
+    if err or timeout then
+        return nil, err, timeout
     end
 
     local form = Form()
