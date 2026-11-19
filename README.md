@@ -211,6 +211,12 @@ end
 
 ## res, err, timeout = form:encode( [boundary [, writer]] )
 
+The legacy positional signature remains available unchanged. The new signature is:
+
+```lua
+res, err, timeout = form:encode([opts])
+```
+
 Encode the form in `application/x-www-form-urlencoded` or `multipart/form-data` format.
 
 **Parameters**
@@ -227,6 +233,14 @@ Encode the form in `application/x-www-form-urlencoded` or `multipart/form-data` 
     ```
   On success, multipart writers must return exactly `#s` or `len`.
   The encoder stops on an incomplete write, an error, or a timeout.
+- `opts:table`: when it is the only argument, supplies named options. The
+  encoder leaves this table unchanged.
+
+| Option | Legacy argument | Formats | Meaning |
+| --- | --- | --- | --- |
+| `boundary` | First | Multipart | Multipart boundary. Omit it for URL-encoded output. |
+| `deeply` | | URL-encoded | Traverse nested tables and join nested keys with dots. Defaults to `false`. |
+| `writer` | Second | Both | Optional destination for encoded output. |
 
 Multipart file output starts at the current file position. The writer
 receives that position as `offset`, the remaining length as `len`, and

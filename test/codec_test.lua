@@ -179,9 +179,16 @@ end
 function testcase.multipart_timeout_results()
     local cause = errors.new('callback failed')
     for _, result in ipairs({
-        { timeout = true },
-        { err = cause, timeout = true },
-        { err = cause },
+        {
+            timeout = true,
+        },
+        {
+            err = cause,
+            timeout = true,
+        },
+        {
+            err = cause,
+        },
     }) do
         local f, err, timeout = form.decode({
             read = function()
@@ -243,6 +250,59 @@ function testcase.encode_writer_counts()
     assert(errors.is(err, errno.EIO))
 end
 
+function testcase.encode_options()
+    local f = assert(form.decode('profile.name=alice', {
+        deeply = true,
+    }))
+    local chunks = {}
+    local writer = {
+        write = function(_, s)
+            chunks[#chunks + 1] = s
+            return #s
+        end,
+    }
+    local options = {
+        deeply = true,
+        writer = writer,
+    }
+    local n = assert(f:encode(options))
+    local encoded = table.concat(chunks)
+    assert.equal(encoded, 'profile.name=alice')
+    assert.equal(n, #encoded)
+    assert.equal(options, {
+        deeply = true,
+        writer = writer,
+    })
+
+    f = form.new()
+    f:add('message', 'hello')
+    chunks = {}
+    writer = {
+        write = function(_, s)
+            chunks[#chunks + 1] = s
+            return #s
+        end,
+        writefile = function()
+            error('unexpected file write')
+        end,
+    }
+    options = {
+        boundary = BOUNDARY,
+        writer = writer,
+    }
+    n = assert(f:encode(options))
+    encoded = table.concat(chunks)
+    assert.equal(n, #encoded)
+    assert.equal(assert(form.decode(encoded, BOUNDARY)):get('message'), 'hello')
+    assert.equal(options, {
+        boundary = BOUNDARY,
+        writer = writer,
+    })
+
+    local err = assert.throws(f.encode, f, {}, writer)
+    assert.match(err, 'boundary must be string')
+end
+
 function testcase.multipart_roundtrip()
     local f = form.new()
     f:add('message', {
@@ -254,7 +314,8 @@ function testcase.multipart_roundtrip()
         },
     })
     local decoded = assert(form.decode(assert(f:encode(BOUNDARY)), BOUNDARY))
-    local roundtrip = assert(form.decode(assert(decoded:encode(BOUNDARY)), BOUNDARY))
+    local roundtrip = assert(form.decode(assert(decoded:encode(BOUNDARY)),
+                                         BOUNDARY))
     assert.equal(roundtrip:get('message'), 'hello')
     assert.equal(roundtrip:getraw('message'), {
         data = 'hello',
