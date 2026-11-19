@@ -11,8 +11,8 @@ description = {
 }
 dependencies = {
     "lua >= 5.1",
-    "form-urlencoded ~> 0.2",
-    "form-multipart ~> 0.4",
+    "form-urlencoded ~> 0.4",
+    "form-multipart ~> 0.5",
     "lauxhlib >= 0.6.0",
     "metamodule >= 0.4.0",
 }
